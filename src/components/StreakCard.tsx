@@ -3,6 +3,7 @@ import {
   formatStreak,
   streakSeconds,
   milestoneProgress,
+  milestonesFor,
   moneySaved,
   minutesReclaimed,
   formatRand,
@@ -22,7 +23,10 @@ export default function StreakCard({
   socialMinutes: number;
 }) {
   const secs = streakSeconds(habit.current_streak_start, now);
-  const { next, prevSeconds, fraction } = milestoneProgress(secs);
+  const { next, prevSeconds, fraction } = milestoneProgress(
+    secs,
+    milestonesFor(habit.name),
+  );
   const longest = Math.max(habit.longest_streak_seconds ?? 0, secs);
 
   let stat: { label: string; value: string } | null = null;

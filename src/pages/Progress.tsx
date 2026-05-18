@@ -15,13 +15,16 @@ import { supabase, USER_ID } from "@/lib/supabase";
 import { useAppData } from "@/state/AppData";
 import { useNow } from "@/hooks/useNow";
 import {
-  MILESTONES,
+  TOGETHER_MILESTONES,
+  milestonesFor,
+  combinedSeconds,
   streakSeconds,
   formatStreak,
   moneySaved,
   minutesReclaimed,
   formatRand,
   formatHours,
+  type Milestone,
 } from "@/lib/streaks";
 import { HABIT_LABELS } from "@/lib/types";
 import GlassCard from "@/components/GlassCard";
@@ -213,47 +216,100 @@ export default function Progress() {
         )}
       </GlassCard>
 
-      <GlassCard brackets bracketColor="#FF6B2B">
-        <div className="mb-3 font-mono text-xs uppercase tracking-wide text-white/45">
-          Milestones — smoke-free
-        </div>
-        <ul className="space-y-2">
-          {(() => {
-            const smoking = habits.find((h) => h.name === "smoking");
-            const secs = smoking
-              ? streakSeconds(smoking.current_streak_start, now)
-              : 0;
-            return MILESTONES.map((m) => {
-              const reached = secs >= m.seconds;
-              return (
-                <li
-                  key={m.key}
-                  className="flex items-start gap-3 rounded-xl border border-white/[0.06] p-3"
-                  style={{
-                    background: reached ? "rgba(34,197,94,0.06)" : "transparent",
-                  }}
-                >
-                  <span
-                    className={`mt-0.5 font-mono text-xs ${
-                      reached ? "text-success" : "text-white/35"
-                    }`}
-                  >
-                    {m.label}
-                  </span>
-                  <span
-                    className={`flex-1 text-sm ${
-                      reached ? "text-white/80" : "text-white/40"
-                    }`}
-                  >
-                    {m.benefit}
-                  </span>
-                </li>
-              );
-            });
-          })()}
-        </ul>
-      </GlassCard>
+      {(() => {
+        const quit = habits.filter((h) => h.enabled && h.type === "quit");
+        const quitSecs = quit.map((h) => streakSeconds(h.current_streak_start, now));
+        const together = combinedSeconds(quitSecs);
+        return (
+          <>
+            {quit.map((h) => (
+              <MilestoneCard
+                key={h.id}
+                title={`Milestones — ${HABIT_LABELS[h.name]}`}
+                color="#7B3FE4"
+                secs={streakSeconds(h.current_streak_start, now)}
+                list={milestonesFor(h.name)}
+              />
+            ))}
+            {quit.length >= 2 && (
+              <MilestoneCard
+                title="Together — smoke-free + off the feed"
+                subtitle={`Counts only while both hold · ${formatStreak(together)}`}
+                color="#FF6B2B"
+                secs={together}
+                list={TOGETHER_MILESTONES}
+              />
+            )}
+          </>
+        );
+      })()}
     </div>
+  );
+}
+
+function MilestoneCard({
+  title,
+  subtitle,
+  color,
+  secs,
+  list,
+}: {
+  title: string;
+  subtitle?: string;
+  color: string;
+  secs: number;
+  list: Milestone[];
+}) {
+  const nextIdx = list.findIndex((m) => secs < m.seconds);
+  return (
+    <GlassCard brackets bracketColor={color}>
+      <div className="mb-1 font-mono text-xs uppercase tracking-wide text-white/45">
+        {title}
+      </div>
+      {subtitle && (
+        <div className="mb-3 font-mono text-[11px] text-white/30">{subtitle}</div>
+      )}
+      <ul className="mt-2 space-y-2">
+        {list.map((m, i) => {
+          const reached = secs >= m.seconds;
+          const isNext = i === nextIdx;
+          return (
+            <li
+              key={m.key}
+              className="flex items-start gap-3 rounded-xl border p-3"
+              style={{
+                borderColor: isNext ? `${color}55` : "rgba(255,255,255,0.06)",
+                background: reached
+                  ? "rgba(34,197,94,0.06)"
+                  : isNext
+                    ? "rgba(255,255,255,0.03)"
+                    : "transparent",
+              }}
+            >
+              <span
+                className={`mt-0.5 font-mono text-xs ${
+                  reached ? "text-success" : isNext ? "text-white/70" : "text-white/35"
+                }`}
+              >
+                {m.label}
+              </span>
+              <span
+                className={`flex-1 text-sm ${
+                  reached ? "text-white/80" : isNext ? "text-white/70" : "text-white/40"
+                }`}
+              >
+                {m.benefit}
+                {isNext && (
+                  <span className="ml-1 font-mono text-[11px] text-white/35">
+                    · next up
+                  </span>
+                )}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </GlassCard>
   );
 }
 
