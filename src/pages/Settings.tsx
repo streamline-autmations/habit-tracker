@@ -28,8 +28,8 @@ export default function Settings() {
   }, []);
 
   const smoking = habits.find((h) => h.name === "smoking");
-  const startDate = smoking
-    ? format(new Date(smoking.current_streak_start), "yyyy-MM-dd")
+  const startValue = smoking
+    ? format(new Date(smoking.current_streak_start), "yyyy-MM-dd'T'HH:mm")
     : "";
 
   if (!settings) {
@@ -84,14 +84,16 @@ export default function Settings() {
             className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-mono text-base text-white focus:outline-none"
           />
         </Row>
-        <Row label="Started quitting on">
+        <Row label="Quit start (date + time)">
           <input
-            type="date"
-            value={startDate}
+            type="datetime-local"
+            value={startValue}
             onChange={(e) => {
               if (!e.target.value) return;
-              const iso = new Date(e.target.value + "T00:00:00").toISOString();
-              void setStreakStart("smoking", iso);
+              const iso = new Date(e.target.value).toISOString();
+              habits
+                .filter((h) => h.enabled && h.type === "quit")
+                .forEach((h) => void setStreakStart(h.name, iso));
             }}
             className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-mono text-base text-white focus:outline-none"
           />
