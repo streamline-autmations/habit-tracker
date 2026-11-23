@@ -44,7 +44,3 @@ Build command `npm run build`, output dir `dist`.
   (`node scripts/gen-icons.mjs`) — swap with real art anytime.
 - Stack: React 18 + TS + Vite + Tailwind + Framer Motion + Recharts +
   Supabase + vite-plugin-pwa.
-
----
-
-Designed & built by [Streamline Automations](https://streamline-automations.co.za/).
